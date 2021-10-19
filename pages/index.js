@@ -12,7 +12,7 @@ export default function Home() {
 
   const apiPostNewsImage = () => {
     // API post, returns image location as string e.g. 'http://www.example.com/images/foo.png'
-    return "https://images4.alphacoders.com/794/thumb-1920-794670.png";
+    return "https://i.blogs.es/c9888c/bliss-ncu-studio/450_1000.jpg";
   };
 
   const imageHandler = () => {
