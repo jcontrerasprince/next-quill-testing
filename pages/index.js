@@ -1,8 +1,89 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import styles from '../styles/Home.module.css'
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import Head from "next/head";
+import Image from "next/image";
+import styles from "../styles/Home.module.css";
+const ReactQuill =
+  typeof window === "object" ? require("react-quill") : () => false;
+import "../node_modules/react-quill/dist/quill.snow.css";
 
 export default function Home() {
+  const [body, setBody] = useState("");
+  const quillRef = useRef(null);
+
+  const apiPostNewsImage = () => {
+    // API post, returns image location as string e.g. 'http://www.example.com/images/foo.png'
+    return "https://images4.alphacoders.com/794/thumb-1920-794670.png";
+  };
+
+  const imageHandler = () => {
+    console.log("Estoy aqui");
+    const input = document.createElement("input");
+
+    input.setAttribute("type", "file");
+    input.setAttribute("accept", "image/*");
+    input.click();
+
+    input.onchange = async () => {
+      const file = input.files[0];
+      const formData = new FormData();
+
+      formData.append("image", file);
+
+      // Save current cursor state
+      const quill = quillRef.current.editor;
+      const range = quill.getSelection(true);
+
+      // Insert temporary loading placeholder image
+      quill.insertEmbed(
+        range.index,
+        "image",
+        `${window.location.origin}/images/loaders/placeholder.gif`
+      );
+
+      // Move cursor to right side of image (easier to continue typing)
+      quill.setSelection(range.index + 1);
+
+      const res = await apiPostNewsImage(formData); // API post, returns image location as string e.g. 'http://www.example.com/images/foo.png'
+
+      // Remove placeholder image
+      quill.deleteText(range.index, 1);
+
+      // Insert uploaded image
+      // this.quill.insertEmbed(range.index, 'image', res.body.image);
+      quill.insertEmbed(range.index, "image", res);
+    };
+  };
+
+  const modules = useMemo(
+    () => ({
+      toolbar: {
+        container: [
+          [
+            { header: "1" },
+            { header: "2" },
+            { header: [3, 4, 5, 6] },
+            { font: [] },
+          ],
+          [{ size: [] }],
+          ["bold", "italic", "underline", "strike", "blockquote"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          ["link", "image", "video"],
+          ["clean"],
+          ["code-block"],
+        ],
+        handlers: {
+          image: imageHandler,
+        },
+      },
+    }),
+    []
+  );
+
+  const handleBody = (e) => {
+    console.log(e);
+    setBody(e);
+  };
+
   return (
     <div className={styles.container}>
       <Head>
@@ -17,38 +98,35 @@ export default function Home() {
         </h1>
 
         <p className={styles.description}>
-          Get started by editing{' '}
+          Get started by editing{" "}
           <code className={styles.code}>pages/index.js</code>
         </p>
 
         <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h2>Documentation &rarr;</h2>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h2>Learn &rarr;</h2>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h2>Examples &rarr;</h2>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h2>Deploy &rarr;</h2>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+          <h2>Text Editor</h2>
+          <ReactQuill
+            ref={quillRef}
+            placeholder="Write something amazing..."
+            modules={modules}
+            // formats={[
+            //   "header",
+            //   "font",
+            //   "size",
+            //   "bold",
+            //   "italic",
+            //   "underline",
+            //   "strike",
+            //   "blockquote",
+            //   "list",
+            //   "bullet",
+            //   "link",
+            //   "image",
+            //   "video",
+            //   "code-block",
+            // ]}
+            onChange={handleBody}
+            value={body}
+          />
         </div>
       </main>
 
@@ -58,12 +136,12 @@ export default function Home() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Powered by{' '}
+          Powered by{" "}
           <span className={styles.logo}>
             <Image src="/vercel.svg" alt="Vercel Logo" width={72} height={16} />
           </span>
         </a>
       </footer>
     </div>
-  )
+  );
 }
